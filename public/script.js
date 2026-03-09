@@ -1,0 +1,129 @@
+document.getElementById('generateForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const jdText = document.getElementById('jdText').value;
+    const submitBtn = document.getElementById('submitBtn');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const errorBox = document.getElementById('errorBox');
+    const resultsBox = document.getElementById('resultsBox');
+    const cvDownload = document.getElementById('cvDownload');
+    const clDownload = document.getElementById('clDownload');
+
+    // Reset UI
+    errorBox.classList.add('hidden');
+    resultsBox.classList.add('hidden');
+    submitBtn.disabled = true;
+    loadingSpinner.classList.remove('hidden');
+
+    try {
+        const response = await fetch('/api/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ jdText })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to generate documents');
+        }
+
+        // Show success
+        cvDownload.href = data.cvUrl;
+        clDownload.href = data.clUrl;
+        resultsBox.classList.remove('hidden');
+
+    } catch (err) {
+        errorBox.textContent = err.message;
+        errorBox.classList.remove('hidden');
+    } finally {
+        submitBtn.disabled = false;
+        loadingSpinner.classList.add('hidden');
+    }
+});
+
+document.getElementById('syncBtn').addEventListener('click', async () => {
+    const syncBtn = document.getElementById('syncBtn');
+    const syncSpinner = document.getElementById('syncSpinner');
+    const errorBox = document.getElementById('errorBox');
+
+    errorBox.classList.add('hidden');
+    syncBtn.disabled = true;
+    syncSpinner.classList.remove('hidden');
+
+    try {
+        const response = await fetch('/api/github-repos');
+        const data = await response.json();
+
+        if (!response.ok) throw new Error(data.error || 'Failed to fetch repositories');
+
+        const repoList = document.getElementById('repoList');
+        repoList.innerHTML = '';
+
+        data.repos.forEach(repo => {
+            repoList.innerHTML += `
+                <div class="p-3 flex items-start space-x-3 hover:bg-gray-50">
+                    <div class="flex-shrink-0 mt-1">
+                        <input type="checkbox" id="repo-${repo.name}" value="${repo.name}" class="repo-checkbox h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <label for="repo-${repo.name}" class="font-medium text-gray-900 cursor-pointer block">${repo.name}</label>
+                        <p class="text-sm text-gray-500 truncate" title="${repo.description}">${repo.description || 'No description'}</p>
+                        ${repo.language ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 mt-1">${repo.language}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+
+        document.getElementById('repoModal').classList.remove('hidden');
+    } catch (err) {
+        errorBox.textContent = err.message;
+        errorBox.classList.remove('hidden');
+    } finally {
+        syncBtn.disabled = false;
+        syncSpinner.classList.add('hidden');
+    }
+});
+
+document.getElementById('closeModalBtn').addEventListener('click', () => {
+    document.getElementById('repoModal').classList.add('hidden');
+});
+
+document.getElementById('confirmSyncBtn').addEventListener('click', async () => {
+    const confirmSyncBtn = document.getElementById('confirmSyncBtn');
+    const modalSyncSpinner = document.getElementById('modalSyncSpinner');
+    const errorBox = document.getElementById('errorBox');
+
+    // Get all checked repos
+    const checkboxes = document.querySelectorAll('.repo-checkbox:checked');
+    const selectedRepos = Array.from(checkboxes).map(cb => cb.value);
+
+    if (selectedRepos.length === 0) {
+        alert('Please select at least one repository to sync.');
+        return;
+    }
+
+    confirmSyncBtn.disabled = true;
+    modalSyncSpinner.classList.remove('hidden');
+
+    try {
+        const response = await fetch('/api/sync-projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ selectedRepos })
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to sync projects');
+
+        document.getElementById('repoModal').classList.add('hidden');
+        alert(`Successfully synced ${data.totalSynced} projects to your Master Profile!`);
+    } catch (err) {
+        alert(`Sync Error: ${err.message}`);
+    } finally {
+        confirmSyncBtn.disabled = false;
+        modalSyncSpinner.classList.add('hidden');
+    }
+});

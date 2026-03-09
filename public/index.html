@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Helper - AI PDF Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+    <div class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
+                Resume Helper
+            </h1>
+            <p class="mt-4 text-lg text-gray-500">
+                Paste a Job Description. We'll consult your Master Profile and instantly generate a tailored CV and
+                Cover Letter.
+            </p>
+        </div>
+
+        <div class="bg-white shadow rounded-lg p-6 sm:p-8">
+            <form id="generateForm" class="space-y-6">
+                <div>
+                    <label for="jdText" class="block text-sm font-medium text-gray-700">Job Description (JD)</label>
+                    <div class="mt-1">
+                        <textarea id="jdText" name="jdText" rows="12"
+                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-3 border"
+                            placeholder="Paste the full job description here..." required></textarea>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between mt-4">
+                    <div class="flex flex-col space-y-2">
+                        <span class="text-sm text-gray-500">Master Profile automatically loaded from <code
+                                class="bg-gray-100 px-1 rounded">data/master_profile.json</code></span>
+                        <button type="button" id="syncBtn"
+                            class="inline-flex items-center px-4 py-2 border border-blue-600 text-sm font-medium rounded-md shadow-sm text-blue-600 bg-transparent hover:bg-blue-50 focus:outline-none transition-colors w-max">
+                            <svg id="syncSpinner" class="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600 hidden"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                            Sync GitHub Projects
+                        </button>
+                    </div>
+
+                    <button type="submit" id="submitBtn"
+                        class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <svg id="loadingSpinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden"
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                        Generate PDFs
+                    </button>
+                </div>
+            </form>
+
+            <div id="errorBox" class="mt-6 bg-red-50 border border-red-200 text-red-700 p-4 rounded-md hidden"></div>
+
+            <div id="resultsBox" class="mt-8 border-t border-gray-200 pt-8 hidden">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Your Tailored Documents</h3>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div
+                        class="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500 transition-all">
+                        <div class="flex-shrink-0">
+                            <svg class="h-10 w-10 text-red-500" fill="currentColor" viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <a href="#" id="cvDownload" target="_blank" class="focus:outline-none">
+                                <span class="absolute inset-0" aria-hidden="true"></span>
+                                <p class="text-sm font-medium text-gray-900">Tailored CV</p>
+                                <p class="text-sm text-gray-500 truncate">cv.pdf</p>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div
+                        class="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500 transition-all">
+                        <div class="flex-shrink-0">
+                            <svg class="h-10 w-10 text-blue-500" fill="currentColor" viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <a href="#" id="clDownload" target="_blank" class="focus:outline-none">
+                                <span class="absolute inset-0" aria-hidden="true"></span>
+                                <p class="text-sm font-medium text-gray-900">Cover Letter</p>
+                                <p class="text-sm text-gray-500 truncate">cover_letter.pdf</p>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Repo Selection Modal -->
+    <div id="repoModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Select Projects to Sync</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p class="text-sm text-gray-500 mb-4">Choose which GitHub repositories you want to extract and
+                        include in your Master Profile.</p>
+                    <div id="repoList" class="text-left max-h-60 overflow-y-auto border rounded divide-y">
+                        <!-- Repos will be injected here via JS -->
+                    </div>
+                </div>
+                <div class="items-center px-4 py-3 flex justify-between space-x-4">
+                    <button id="closeModalBtn"
+                        class="px-4 py-2 bg-gray-100 text-gray-700 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                        Cancel
+                    </button>
+                    <button id="confirmSyncBtn"
+                        class="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 inline-flex justify-center items-center">
+                        <svg id="modalSyncSpinner" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden"
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                        Sync Selected
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CV {{name}}</title>
+    <style>
+        /* RESET */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #525659;
+            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* COMPACT PAGE SETTINGS */
+        .page {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 30px 25px 20px 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            color: #000;
+        }
+
+        /* HEADER */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            gap: 15px;
+            padding-top: 5px;
+        }
+
+        .header-photo-left {
+            flex-shrink: 0;
+        }
+
+        .header-info {
+            flex: 1;
+            text-align: center;
+        }
+
+        .header-qr-right {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .photo-box {
+            width: 90px;
+            height: 110px;
+            background-color: #f4f4f4;
+            border: 1px solid #333;
+            overflow: hidden;
+        }
+
+        .photo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* QR CODE */
+        .qr-box {
+            width: 80px;
+            height: 80px;
+            border: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .qr-label {
+            font-size: 7pt;
+            text-align: center;
+            margin-top: 2px;
+            color: #333;
+        }
+
+        /* TYPOGRAPHY COMPRESSION */
+        .job-title-main {
+            font-size: 18pt;
+            font-weight: 800;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            line-height: 1;
+            color: #000;
+            letter-spacing: 0.5px;
+        }
+
+        h1 {
+            font-size: 14pt;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #222;
+        }
+
+        /* CONTACT COMPRESSION */
+        .contact-row {
+            font-size: 9pt;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 2px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        .contact-item svg {
+            width: 11px;
+            height: 11px;
+            margin-right: 5px;
+            fill: #000;
+        }
+
+        a {
+            text-decoration: none;
+            color: #000;
+            border-bottom: 1px solid #000;
+        }
+
+        /* SECTIONS */
+        section {
+            margin-bottom: 15px;
+        }
+
+        h2 {
+            font-size: 10.5pt;
+            text-transform: uppercase;
+            border-bottom: 2px solid #000;
+            padding-bottom: 2px;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            font-weight: 800;
+        }
+
+        .content-block {
+            font-size: 9pt;
+            line-height: 1.35;
+            text-align: justify;
+        }
+
+        /* SKILLS */
+        .skill-line {
+            margin-bottom: 3px;
+        }
+
+        .skill-label {
+            font-weight: 800;
+            color: #000;
+        }
+
+        /* ENTRIES */
+        .entry {
+            margin-bottom: 12px;
+        }
+
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 800;
+            font-size: 9.5pt;
+            margin-bottom: 2px;
+        }
+
+        .entry-sub {
+            font-style: italic;
+            font-size: 9pt;
+            margin-bottom: 4px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* LISTS */
+        ul {
+            list-style: none;
+            padding-left: 8px;
+            margin-top: 2px;
+        }
+
+        li {
+            position: relative;
+            padding-left: 12px;
+            margin-bottom: 2px;
+            font-size: 9pt;
+        }
+
+        li::before {
+            content: "›";
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            color: #000;
+            font-size: 10pt;
+            line-height: 1;
+        }
+
+        /* TECH STACK */
+        .tech-stack {
+            margin-top: 3px;
+            padding-top: 3px;
+            font-size: 8.5pt;
+            color: #444;
+            border-top: 1px dotted #ccc;
+        }
+
+        .tech-stack strong {
+            color: #000;
+            font-weight: 700;
+            margin-right: 3px;
+        }
+
+        /* PRINT FORCE ONE PAGE */
+        @page {
+            size: A4;
+            margin: 0mm;
+        }
+
+        @media print {
+            body {
+                background: none;
+                padding: 0;
+                display: block;
+            }
+
+            .page {
+                width: 100%;
+                height: 100%;
+                box-shadow: none;
+                margin: 0;
+                padding: 20px 30px;
+            }
+
+            a {
+                border-bottom: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <header>
+            <div class="header-photo-left">
+                <div class="photo-box">
+                    <img src="proMoi.png" alt="Photo" onerror="
+                                this.style.display = 'none';
+                                this.parentNode.style.backgroundColor =
+                                    '#e0e0e0';
+                            " />
+                </div>
+            </div>
+
+            <div class="header-info">
+                <div class="job-title-main">
+                    {{title}}
+                </div>
+
+                <h1>{{name}}</h1>
+
+                <div class="contact-row" style="justify-content: center">
+                    <div class="contact-item">
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+                        </svg>
+                        {{phone}}
+                    </div>
+                    <div class="contact-item">
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+                        </svg>
+                        <a href="mailto:{{email}}">{{email}}</a>
+                    </div>
+                    <div class="contact-item">
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+                        </svg>
+                        <a href="https://{{linkedin}}">{{linkedin_short}}</a>
+                    </div>
+                </div>
+
+                <div class="contact-row" style="justify-content: center">
+                    <div class="contact-item">
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02a9.68 9.68 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z" />
+                        </svg>
+                        <a href="https://{{github}}">{{github_short}}</a>
+                    </div>
+                    <div class="contact-item">
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                        </svg>
+                        {{location}}
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-qr-right">
+                <div class="qr-box">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://{{github}}"
+                        alt="Portfolio QR" />
+                </div>
+                <div class="qr-label">Portfolio</div>
+            </div>
+        </header>
+
+        <section>
+            <h2>Technical Skills</h2>
+            <div class="content-block">
+                <div class="skill-line">
+                    {{skills}}
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Featured Projects</h2>
+            {{projects}}
+        </section>
+
+        <section>
+            <h2>Experience</h2>
+            {{experience}}
+        </section>
+
+        <section>
+            <h2>Education</h2>
+            {{education}}
+        </section>
+    </div>
+</body>
+
+</html>
