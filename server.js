@@ -18,25 +18,47 @@ const PORT = process.env.PORT || 3005;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.post('/api/generate', async (req, res) => {
+app.post('/api/generate-content', async (req, res) => {
     try {
         const { jdText } = req.body;
 
         if (!jdText) {
-            return res.status(400).json({ error: 'Job Description is required' });
+            return res.status(400).json({ error: 'Job description text is required' });
         }
 
-        console.log('Reading Master Profile...');
-        const masterProfileRaw = await fs.readFile(path.join(__dirname, 'data/master_profile.json'), 'utf8');
-        const masterProfile = JSON.parse(masterProfileRaw);
+        console.log('Received JD. Processing through AI...');
+        const masterPath = path.join(__dirname, 'data/master_profile.json');
 
-        console.log('Aligning Profile to JD via AI...');
+        let masterProfile;
+        try {
+            const masterRaw = await fs.readFile(masterPath, 'utf8');
+            masterProfile = JSON.parse(masterRaw);
+        } catch (err) {
+            throw new Error(`Failed to load master_profile.json. Ensure it exists in data/: ${err.message}`);
+        }
+
         const optimizedData = await alignProfileToJD(jdText, masterProfile);
 
-        console.log('Generating PDFs...');
+        console.log('AI Processing complete. Sending content to frontend for review.');
+        res.json({ success: true, optimizedData });
+
+    } catch (error) {
+        console.error('Error in /api/generate-content:', error);
+        res.status(500).json({ error: error.message || 'Internal server error' });
+    }
+});
+
+app.post('/api/generate-pdf', async (req, res) => {
+    try {
+        const { optimizedData } = req.body;
+
+        if (!optimizedData) {
+            return res.status(400).json({ error: 'Optimized data is required to render PDFs' });
+        }
+
+        console.log('Rendering PDFs with Puppeteer...');
         const { cvPdf, clPdf } = await generatePDFs(optimizedData);
 
-        console.log('Saving PDFs to public/output...');
         const outputDir = path.join(__dirname, 'public/output');
         await fs.mkdir(outputDir, { recursive: true });
 
@@ -46,15 +68,16 @@ app.post('/api/generate', async (req, res) => {
         await fs.writeFile(cvPath, cvPdf);
         await fs.writeFile(clPath, clPdf);
 
-        console.log('Finished Generation successfully.');
+        console.log('PDF Generation successfully complete.');
         res.json({
             success: true,
             cvUrl: '/output/cv.pdf',
             clUrl: '/output/cover_letter.pdf'
         });
+
     } catch (error) {
-        console.error('Error in /api/generate:', error);
-        res.status(500).json({ error: error.message || 'Internal server error' });
+        console.error('Error in /api/generate-pdf:', error);
+        res.status(500).json({ error: error.message || 'Internal server error during PDF generation' });
     }
 });
 

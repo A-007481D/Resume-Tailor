@@ -1,4 +1,4 @@
-document.getElementById('generateForm').addEventListener('submit', async (e) => {
+document.getElementById('submitBtn').addEventListener('click', async (e) => {
     e.preventDefault();
 
     const jdText = document.getElementById('jdText').value;
@@ -6,34 +6,33 @@ document.getElementById('generateForm').addEventListener('submit', async (e) => 
     const loadingSpinner = document.getElementById('loadingSpinner');
     const errorBox = document.getElementById('errorBox');
     const resultsBox = document.getElementById('resultsBox');
-    const cvDownload = document.getElementById('cvDownload');
-    const clDownload = document.getElementById('clDownload');
+    const editorSection = document.getElementById('editorSection');
+    const jsonEditor = document.getElementById('jsonEditor');
 
     // Reset UI
     errorBox.classList.add('hidden');
     resultsBox.classList.add('hidden');
+    editorSection.classList.add('hidden');
     submitBtn.disabled = true;
     loadingSpinner.classList.remove('hidden');
 
     try {
-        const response = await fetch('/api/generate', {
+        const response = await fetch('/api/generate-content', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ jdText })
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(data.error || 'Failed to generate documents');
+            throw new Error(data.error || 'Failed to generate content');
         }
 
-        // Show success
-        cvDownload.href = data.cvUrl;
-        clDownload.href = data.clUrl;
-        resultsBox.classList.remove('hidden');
+        // Populate the editor and show it
+        jsonEditor.value = JSON.stringify(data.optimizedData, null, 2);
+        editorSection.classList.remove('hidden');
+        jsonEditor.focus();
 
     } catch (err) {
         errorBox.textContent = err.message;
@@ -41,6 +40,55 @@ document.getElementById('generateForm').addEventListener('submit', async (e) => 
     } finally {
         submitBtn.disabled = false;
         loadingSpinner.classList.add('hidden');
+    }
+});
+
+document.getElementById('renderPdfBtn').addEventListener('click', async () => {
+    const renderPdfBtn = document.getElementById('renderPdfBtn');
+    const renderSpinner = document.getElementById('renderSpinner');
+    const errorBox = document.getElementById('errorBox');
+    const resultsBox = document.getElementById('resultsBox');
+    const jsonEditor = document.getElementById('jsonEditor');
+
+    errorBox.classList.add('hidden');
+    resultsBox.classList.add('hidden');
+    renderPdfBtn.disabled = true;
+    renderSpinner.classList.remove('hidden');
+
+    try {
+        // Parse the manually edited JSON
+        let optimizedData;
+        try {
+            optimizedData = JSON.parse(jsonEditor.value);
+        } catch (parseErr) {
+            throw new Error('Invalid JSON format. Please correct syntax errors before rendering.');
+        }
+
+        const response = await fetch('/api/generate-pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ optimizedData })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to generate PDFs');
+        }
+
+        document.getElementById('cvDownload').href = data.cvUrl;
+        document.getElementById('clDownload').href = data.clUrl;
+        resultsBox.classList.remove('hidden');
+
+        // Scroll to results
+        resultsBox.scrollIntoView({ behavior: 'smooth' });
+
+    } catch (err) {
+        errorBox.textContent = err.message;
+        errorBox.classList.remove('hidden');
+    } finally {
+        renderPdfBtn.disabled = false;
+        renderSpinner.classList.add('hidden');
     }
 });
 
