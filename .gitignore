@@ -72,6 +72,9 @@ typings/
 .env
 .env.test
 
+# Private User Data
+data/master_profile.json
+
 # parcel-bundler cache
 .cache
 

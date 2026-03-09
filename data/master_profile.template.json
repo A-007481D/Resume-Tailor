@@ -1,0 +1,60 @@
+{
+  "personalInfo": {
+    "name": "Jane Doe",
+    "email": "jane.doe@example.com",
+    "phone": "+1 234-567-8900",
+    "location": "San Francisco, CA",
+    "linkedin": "linkedin.com/in/janedoe",
+    "github": "https://github.com/janedoe",
+    "summary": "Full Stack Software Engineer with a passion for building scalable web applications, automating workflows, and leveraging Cloud Native technologies."
+  },
+  "skills": [
+    "JavaScript",
+    "TypeScript",
+    "React",
+    "Node.js",
+    "Python",
+    "Docker",
+    "Kubernetes",
+    "AWS",
+    "CI/CD",
+    "PostgreSQL",
+    "Microservices"
+  ],
+  "experience": [
+    {
+      "company": "Tech Innovators Inc. | San Francisco, CA",
+      "position": "Software Engineer",
+      "startDate": "July 2022",
+      "endDate": "Present",
+      "highlights": [
+        "Architected and deployed a microservices-based backend using Node.js and Docker, improving system scalability by 40%.",
+        "Designed and implemented high-performance REST APIs serving over 50k daily active users.",
+        "Collaborated with cross-functional teams to integrate a new payment gateway, reducing transaction latency by 15%."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "E-Commerce Platform Restyle",
+      "description": "A modern, high-performance web storefront built for small businesses.",
+      "technologies": [
+        "React",
+        "Next.js",
+        "TailwindCSS",
+        "Stripe API"
+      ],
+      "highlights": [
+        "Built a responsive React frontend utilizing Next.js for Server-Side Rendering (SSR), boosting SEO scores by 30%.",
+        "Integrated the Stripe API to securely handle checkout sessions and automated webhooks for order fulfillment."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "B.S. in Computer Science",
+      "institution": "University of Technology",
+      "graduationYear": "2018 - 2022"
+    }
+  ]
+}
