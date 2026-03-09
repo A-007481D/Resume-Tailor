@@ -46,6 +46,7 @@ function formatProjects(projects) {
 }
 
 function formatEducation(education) {
+    if (!education || education.length === 0) return '';
     return education.map(edu => `
                 <div class="entry">
                     <div class="entry-header">
@@ -57,6 +58,26 @@ function formatEducation(education) {
                     </div>
                 </div>
   `).join('');
+}
+
+function formatCertifications(certifications) {
+    if (!certifications || certifications.length === 0) return '';
+    const listHtml = certifications.map(cert => `
+                        <li>
+                            <strong>${cert.name}</strong> – ${cert.issuer}${cert.date ? ` (${cert.date})` : ''}
+                        </li>
+  `).join('');
+
+    return `
+        <section>
+            <h2>Certifications</h2>
+            <div class="content-block">
+                <ul>
+${listHtml}
+                </ul>
+            </div>
+        </section>
+    `;
 }
 
 function formatSkills(skills) {
@@ -111,6 +132,7 @@ export async function generatePDFs(optimizedData) {
             .replace(/{{skills}}/g, formatSkills(cv.skills || []))
             .replace(/{{experience}}/g, formatExperience(cv.experience || []))
             .replace(/{{projects}}/g, formatProjects(cv.projects || []))
+            .replace(/{{certifications}}/g, formatCertifications(cv.certifications || []))
             .replace(/{{education}}/g, formatEducation(cv.education || []));
 
         let contentToInject = coverLetter.content || '';
