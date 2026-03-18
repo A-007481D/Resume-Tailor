@@ -1,7 +1,7 @@
 document.getElementById('submitBtn').addEventListener('click', async (e) => {
     e.preventDefault();
 
-    const jdText = document.getElementById('jdText').value;
+    const jdText = document.getElementById('jdText').value.trim();
     const submitBtn = document.getElementById('submitBtn');
     const loadingSpinner = document.getElementById('loadingSpinner');
     const errorBox = document.getElementById('errorBox');
@@ -13,6 +13,13 @@ document.getElementById('submitBtn').addEventListener('click', async (e) => {
     errorBox.classList.add('hidden');
     resultsBox.classList.add('hidden');
     editorSection.classList.add('hidden');
+
+    if (!jdText) {
+        errorBox.textContent = 'Please paste a job description before generating content.';
+        errorBox.classList.remove('hidden');
+        return;
+    }
+
     submitBtn.disabled = true;
     loadingSpinner.classList.remove('hidden');
 
@@ -23,10 +30,10 @@ document.getElementById('submitBtn').addEventListener('click', async (e) => {
             body: JSON.stringify({ jdText })
         });
 
-        const data = await response.json();
+        const data = await tryReadJson(response);
 
         if (!response.ok) {
-            throw new Error(data.error || 'Failed to generate content');
+            throw new Error(data?.error || 'Failed to generate content');
         }
 
         // Populate the editor and show it
@@ -35,7 +42,7 @@ document.getElementById('submitBtn').addEventListener('click', async (e) => {
         jsonEditor.focus();
 
     } catch (err) {
-        errorBox.textContent = err.message;
+        errorBox.textContent = getFriendlyRequestError(err, 'Failed to generate content');
         errorBox.classList.remove('hidden');
     } finally {
         submitBtn.disabled = false;
@@ -70,10 +77,10 @@ document.getElementById('renderPdfBtn').addEventListener('click', async () => {
             body: JSON.stringify({ optimizedData })
         });
 
-        const data = await response.json();
+        const data = await tryReadJson(response);
 
         if (!response.ok) {
-            throw new Error(data.error || 'Failed to generate PDFs');
+            throw new Error(data?.error || 'Failed to generate PDFs');
         }
 
         document.getElementById('cvDownload').href = data.cvUrl;
@@ -84,7 +91,7 @@ document.getElementById('renderPdfBtn').addEventListener('click', async () => {
         resultsBox.scrollIntoView({ behavior: 'smooth' });
 
     } catch (err) {
-        errorBox.textContent = err.message;
+        errorBox.textContent = getFriendlyRequestError(err, 'Failed to generate PDFs');
         errorBox.classList.remove('hidden');
     } finally {
         renderPdfBtn.disabled = false;
@@ -175,3 +182,19 @@ document.getElementById('confirmSyncBtn').addEventListener('click', async () => 
         modalSyncSpinner.classList.add('hidden');
     }
 });
+
+function getFriendlyRequestError(err, fallbackMessage) {
+    const message = err?.message || '';
+    if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
+        return 'Cannot reach the backend server. Ensure `node server.js` is running and open the app from the same host/port.';
+    }
+    return message || fallbackMessage;
+}
+
+async function tryReadJson(response) {
+    try {
+        return await response.json();
+    } catch {
+        return null;
+    }
+}

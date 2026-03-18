@@ -65,6 +65,20 @@ Because this contains private data, we use a template system for version control
     ```
 2.  Open `data/master_profile.json` and fill in your actual personal info, skills, education, and experience.
 
+### 3.1 Profile Photo for CV
+
+The CV header photo is now loaded automatically from the project root at generation time.
+
+1. Place your current photo in the root folder as one of these names:
+   - `proMoi.png` (preferred)
+   - `proMoi.jpg`
+   - `proMoi.jpeg`
+   - `proMoi.webp`
+2. If multiple files exist, the first match in the order above is used.
+3. To update your CV photo, replace that file and generate PDFs again.
+
+If no photo file is found, the CV keeps the gray placeholder box.
+
 ### 4. Running the Application
 
 Start the server using the included Makefile:

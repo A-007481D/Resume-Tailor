@@ -266,7 +266,7 @@
         <header>
             <div class="header-photo-left">
                 <div class="photo-box">
-                    <img src="proMoi.png" alt="Photo" onerror="
+                    <img src="{{photoSrc}}" alt="Photo" onerror="
                                 this.style.display = 'none';
                                 this.parentNode.style.backgroundColor =
                                     '#e0e0e0';
@@ -325,7 +325,7 @@
 
             <div class="header-qr-right">
                 <div class="qr-box">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://{{github}}"
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://lmalik.vercel.app/"
                         alt="Portfolio QR" />
                 </div>
                 <div class="qr-label">Portfolio</div>
@@ -351,12 +351,12 @@
             {{experience}}
         </section>
 
-        {{certifications}}
-
         <section>
             <h2>Education</h2>
             {{education}}
         </section>
+
+        {{certifications}}
     </div>
 </body>
 

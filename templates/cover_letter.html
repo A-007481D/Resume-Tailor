@@ -1,32 +1,194 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cover Letter {{name}}</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #1f2937;
+            background: #fff;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .page {
+            width: 210mm;
+            height: 297mm;
+            padding: 24mm 22mm;
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .brand h1 {
+            font-size: 22pt;
+            font-weight: 800;
+            color: #111827;
+            line-height: 1.1;
+            margin-bottom: 4px;
+        }
+
+        .brand .role {
+            font-size: 10pt;
+            color: #4b5563;
+            letter-spacing: 0.2px;
+        }
+
+        .contact {
+            text-align: right;
+            font-size: 9.5pt;
+            line-height: 1.55;
+            color: #374151;
+        }
+
+        .meta {
+            margin: 14px 0 16px;
+            font-size: 10pt;
+            color: #111827;
+        }
+
+        .recipient {
+            margin-bottom: 16px;
+            font-size: 10pt;
+            line-height: 1.5;
+            color: #111827;
+        }
+
+        .subject {
+            font-size: 10pt;
+            margin-bottom: 14px;
+            color: #111827;
+        }
+
+        .subject strong {
+            font-weight: 700;
+        }
+
+        .salutation {
+            margin-bottom: 12px;
+            font-size: 10.5pt;
+            color: #111827;
+        }
+
+        .content {
+            font-size: 10.5pt;
+            line-height: 1.65;
+            color: #1f2937;
+            max-height: 150mm;
+            overflow: hidden;
+        }
+
+        .content p {
+            margin-bottom: 12px;
+        }
+
+        .closing {
+            margin-top: 18px;
+            font-size: 10.5pt;
+            color: #111827;
+        }
+
+        .signature-block {
+            margin-top: 16px;
+        }
+
+        .signature-image {
+            max-height: 52px;
+            margin-bottom: 4px;
+            object-fit: contain;
+        }
+
+        .signature-name {
+            font-size: 11pt;
+            font-weight: 700;
+            margin-bottom: 1px;
+            color: #111827;
+        }
+
+        .signature-title,
+        .signature-note {
+            font-size: 9.5pt;
+            color: #4b5563;
+            line-height: 1.45;
+        }
+
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                display: block;
+            }
+
+            .page {
+                width: 100%;
+                height: 297mm;
+                padding: 24mm 22mm;
+                overflow: hidden;
+            }
         }
     </style>
 </head>
 
-<body class="bg-white text-gray-800 antialiased p-8 max-w-4xl mx-auto mt-10">
-    <header class="mb-12">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{name}}</h1>
-        <div class="text-sm text-gray-600 flex flex-col">
-            <span>{{email}}</span>
-            <span>{{phone}}</span>
-            <span>{{location}}</span>
-        </div>
-    </header>
+<body>
+    <main class="page">
+        <section class="top">
+            <div class="brand">
+                <h1>{{name}}</h1>
+                <div class="role">{{title}}</div>
+            </div>
+            <div class="contact">
+                <div>{{email}}</div>
+                <div>{{phone}}</div>
+                <div>{{location}}</div>
+            </div>
+        </section>
 
-    <div class="text-base leading-relaxed space-y-4 text-gray-800">
-        {{content}}
-    </div>
+        <div class="meta">{{date}}</div>
+
+        <section class="recipient">
+            <div>{{recipient_name}}</div>
+            <div>{{recipient_title}}</div>
+            <div>{{company}}</div>
+            <div>{{company_address}}</div>
+        </section>
+
+        <div class="subject"><strong>Subject:</strong> {{subject}}</div>
+        <div class="salutation">{{salutation}}</div>
+
+        <section class="content">
+            {{content}}
+        </section>
+
+        <div class="closing">{{closing_phrase}}</div>
+
+        <section class="signature-block">
+            {{signature_image_block}}
+            <div class="signature-name">{{signature_name}}</div>
+            <div class="signature-title">{{signature_title}}</div>
+            <div class="signature-note">{{signature_note}}</div>
+        </section>
+    </main>
 </body>
 
 </html>
