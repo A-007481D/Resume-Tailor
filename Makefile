@@ -1,15 +1,18 @@
-.PHONY: install start dev clean
+.PHONY: install start stop dev clean
 
 # Install all NodeJS dependencies
 install:
 	npm install
 
-# Start the application server normally
-start: 
-	node server.js
+# Start the application server in background and store PID
+start:
+	npm start
 
-# Start the application in development mode (auto-restarts on changes if you have nodemon)
-# Or runs watch mode in Node 20+
+# Stop the application server started via npm start
+stop:
+	npm stop
+
+# Start the application in foreground watch mode for development
 dev:
 	node --watch server.js
 

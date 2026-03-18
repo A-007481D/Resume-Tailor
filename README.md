@@ -81,12 +81,25 @@ If no photo file is found, the CV keeps the gray placeholder box.
 
 ### 4. Running the Application
 
-Start the server using the included Makefile:
+Start the server:
+
+```bash
+npm start
+```
+
+Stop it from another terminal when needed:
+
+```bash
+npm stop
+```
+
+Optional alternatives:
 
 ```bash
 make start
+make stop
+make dev
 ```
-*(Alternatively, you can use `make dev` to run it in watch mode, or just `node server.js`).*
 
 Open your browser and navigate to: **[http://localhost:4000](http://localhost:4000)**
 

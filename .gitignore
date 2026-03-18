@@ -68,12 +68,18 @@ typings/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
-.env
-.env.test
+# dotenv environment variables files
+.env*
+!.env.example
 
 # Private User Data
 data/master_profile.json
+
+# Local profile photos (do not push personal headshots)
+proMoi.*
+
+# JetBrains project metadata
+.idea/
 
 # parcel-bundler cache
 .cache

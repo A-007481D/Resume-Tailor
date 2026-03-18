@@ -4,6 +4,10 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "start": "node server.js",
+    "start:bg": "node scripts/start-server.js",
+    "start:foreground": "node server.js",
+    "stop": "node scripts/stop-server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

@@ -328,12 +328,12 @@
                     <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://lmalik.vercel.app/"
                         alt="Portfolio QR" />
                 </div>
-                <div class="qr-label">Portfolio</div>
+                <div class="qr-label">{{qr_label}}</div>
             </div>
         </header>
 
         <section>
-            <h2>Technical Skills</h2>
+            <h2>{{label_technical_skills}}</h2>
             <div class="content-block">
                 <div class="skill-line">
                     {{skills}}
@@ -342,17 +342,17 @@
         </section>
 
         <section>
-            <h2>Featured Projects</h2>
+            <h2>{{label_featured_projects}}</h2>
             {{projects}}
         </section>
 
         <section>
-            <h2>Experience</h2>
+            <h2>{{label_experience}}</h2>
             {{experience}}
         </section>
 
         <section>
-            <h2>Education</h2>
+            <h2>{{label_education}}</h2>
             {{education}}
         </section>
 

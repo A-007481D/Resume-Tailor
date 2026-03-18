@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
+import { normalizeLanguage } from './i18n.js';
 
 dotenv.config();
 
@@ -200,17 +201,24 @@ function applyTrackRules(optimizedData, masterProfile, jdText) {
   return safeData;
 }
 
-export async function alignProfileToJD(jdText, masterProfile) {
+export async function alignProfileToJD(jdText, masterProfile, language = 'en') {
   if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
     throw new Error('Gemini API key is missing. Please configure it in the .env file.');
   }
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   const jdTrack = classifyJDTrack(jdText);
+  const outputLanguage = normalizeLanguage(language);
+  const languageName = outputLanguage === 'fr' ? 'French' : 'English';
 
   const systemInstructions = `
 You are an expert technical recruiter and resume writer.
 Your task is to take a Master Profile (JSON) and a Job Description (JD), and produce an Optimized Profile (JSON) specifically tailored for this JD.
+
+STRICT LANGUAGE RULES:
+0. Output language must be strictly ${languageName}.
+0.1 Do not mix languages in any labels, salutation, closing phrase, or body content.
+0.2 Keep proper nouns and official certification names unchanged.
 
 STRICT CONSTRAINTS & RULES:
 1. ONE PAGE LIMIT: keep the CV concise enough to stay on one page.
@@ -278,14 +286,20 @@ Master Profile:\n${JSON.stringify(masterProfile, null, 2)}
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     const result = await model.generateContent(reqConfig);
     const responseText = result.response.text();
-    return applyTrackRules(JSON.parse(responseText), masterProfile, jdText);
+    const parsed = JSON.parse(responseText);
+    const withTrackRules = applyTrackRules(parsed, masterProfile, jdText);
+    withTrackRules.language = outputLanguage;
+    return withTrackRules;
   } catch (error) {
     if (error.status === 429 || error.message.includes('429')) {
       console.warn('Rate limit hit on gemini-2.5-flash! Falling back to gemini-1.5-flash...');
       try {
         const fallbackModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
         const fallbackResult = await fallbackModel.generateContent(reqConfig);
-        return applyTrackRules(JSON.parse(fallbackResult.response.text()), masterProfile, jdText);
+        const parsedFallback = JSON.parse(fallbackResult.response.text());
+        const withTrackRules = applyTrackRules(parsedFallback, masterProfile, jdText);
+        withTrackRules.language = outputLanguage;
+        return withTrackRules;
       } catch (fallbackError) {
         console.error('Fallback Model also failed:', fallbackError);
         throw new Error('Google AI Free Tier Quota Exceeded. Please try again in 1 minute or upgrade your API Key.');

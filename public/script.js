@@ -2,6 +2,7 @@ document.getElementById('submitBtn').addEventListener('click', async (e) => {
     e.preventDefault();
 
     const jdText = document.getElementById('jdText').value.trim();
+    const language = document.getElementById('language').value;
     const submitBtn = document.getElementById('submitBtn');
     const loadingSpinner = document.getElementById('loadingSpinner');
     const errorBox = document.getElementById('errorBox');
@@ -27,7 +28,7 @@ document.getElementById('submitBtn').addEventListener('click', async (e) => {
         const response = await fetch('/api/generate-content', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ jdText })
+            body: JSON.stringify({ jdText, language })
         });
 
         const data = await tryReadJson(response);
@@ -56,6 +57,7 @@ document.getElementById('renderPdfBtn').addEventListener('click', async () => {
     const errorBox = document.getElementById('errorBox');
     const resultsBox = document.getElementById('resultsBox');
     const jsonEditor = document.getElementById('jsonEditor');
+    const language = document.getElementById('language').value;
 
     errorBox.classList.add('hidden');
     resultsBox.classList.add('hidden');
@@ -74,7 +76,7 @@ document.getElementById('renderPdfBtn').addEventListener('click', async () => {
         const response = await fetch('/api/generate-pdf', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ optimizedData })
+            body: JSON.stringify({ optimizedData, language })
         });
 
         const data = await tryReadJson(response);
@@ -191,6 +193,32 @@ function getFriendlyRequestError(err, fallbackMessage) {
     return message || fallbackMessage;
 }
 
+function initLanguageSelector() {
+    const languageSelect = document.getElementById('language');
+    const languageButtons = Array.from(document.querySelectorAll('[data-language]'));
+
+    if (!languageSelect || languageButtons.length === 0) {
+        return;
+    }
+
+    const applyActiveState = (value) => {
+        languageButtons.forEach((button) => {
+            const isActive = button.dataset.language === value;
+            button.classList.toggle('active', isActive);
+            button.setAttribute('aria-pressed', String(isActive));
+        });
+    };
+
+    languageButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            languageSelect.value = button.dataset.language;
+            applyActiveState(languageSelect.value);
+        });
+    });
+
+    applyActiveState(languageSelect.value || 'en');
+}
+
 async function tryReadJson(response) {
     try {
         return await response.json();
@@ -198,3 +226,5 @@ async function tryReadJson(response) {
         return null;
     }
 }
+
+initLanguageSelector();

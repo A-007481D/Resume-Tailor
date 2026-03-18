@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import puppeteer from 'puppeteer';
 import { fileURLToPath } from 'url';
+import { getLocaleConfig, normalizeLanguage } from './i18n.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -66,7 +67,7 @@ function formatExperience(experiences) {
   `).join('');
 }
 
-function formatProjects(projects) {
+function formatProjects(projects, labels) {
     return projects.map(proj => `
                 <div class="entry">
                     <div class="entry-header">
@@ -79,7 +80,7 @@ function formatProjects(projects) {
                         </ul>
                         ${proj.technologies && proj.technologies.length > 0 ? `
                         <div class="tech-stack">
-                            <strong>Stack:</strong> ${proj.technologies.join(', ')}
+                            <strong>${labels.stack}:</strong> ${proj.technologies.join(', ')}
                         </div>` : ''}
                     </div>
                 </div>
@@ -129,7 +130,7 @@ function ensureRequiredCertifications(certifications) {
     return normalized;
 }
 
-function formatCertifications(certifications) {
+function formatCertifications(certifications, labels) {
     const safeCertifications = ensureRequiredCertifications(certifications);
     if (safeCertifications.length === 0) return '';
 
@@ -141,7 +142,7 @@ function formatCertifications(certifications) {
 
     return `
         <section>
-            <h2>Certifications</h2>
+            <h2>${labels.certifications}</h2>
             <div class="content-block">
                 <ul>
 ${listHtml}
@@ -151,9 +152,9 @@ ${listHtml}
     `;
 }
 
-function formatSkills(skills) {
+function formatSkills(skills, labels) {
     if (!skills || skills.length === 0) return '';
-    return `<span class="skill-label">Core Technologies:</span> ${skills.join(', ')}`;
+    return `<span class="skill-label">${labels.coreTechnologies}:</span> ${skills.join(', ')}`;
 }
 
 function formatCoverLetterContent(content) {
@@ -236,7 +237,7 @@ function buildSignatureImageBlock(signatureImage) {
 
 let browserInstance = null;
 
-export async function generatePDFs(optimizedData) {
+export async function generatePDFs(optimizedData, options = {}) {
     if (!browserInstance) {
         console.log("Launching Puppeteer browser instance...");
         browserInstance = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
@@ -252,12 +253,16 @@ export async function generatePDFs(optimizedData) {
         const { cv, coverLetter } = optimizedData;
         const safeCoverLetter = coverLetter && typeof coverLetter === 'object' ? coverLetter : {};
         const { personalInfo } = cv;
+        const outputLanguage = normalizeLanguage(options.language || optimizedData?.language);
+        const localeConfig = getLocaleConfig(outputLanguage);
+        const cvLabels = localeConfig.cv;
+        const clLabels = localeConfig.coverLetter;
         const photoSrc = await getProfilePhotoSrc();
 
         const githubShort = personalInfo.github ? personalInfo.github.replace(/^https?:\/\//, '').replace(/^www\./, '') : '';
         const linkedinShort = personalInfo.linkedin ? personalInfo.linkedin.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/^linkedin\.com\/in\//, '') : '';
 
-        const title = cv.title || 'Software Engineer';
+        const title = cv.title || cvLabels.defaultTitle;
 
         // Inject CV Data
         cvHtml = cvHtml
@@ -271,16 +276,21 @@ export async function generatePDFs(optimizedData) {
             .replace(/{{github}}/g, personalInfo.github)
             .replace(/{{github_short}}/g, githubShort)
             .replace(/{{photoSrc}}/g, photoSrc)
-            .replace(/{{skills}}/g, formatSkills(cv.skills || []))
+            .replace(/{{label_technical_skills}}/g, cvLabels.technicalSkills)
+            .replace(/{{label_featured_projects}}/g, cvLabels.featuredProjects)
+            .replace(/{{label_experience}}/g, cvLabels.experience)
+            .replace(/{{label_education}}/g, cvLabels.education)
+            .replace(/{{qr_label}}/g, cvLabels.qrLabel)
+            .replace(/{{skills}}/g, formatSkills(cv.skills || [], cvLabels))
             .replace(/{{experience}}/g, formatExperience(cv.experience || []))
-            .replace(/{{projects}}/g, formatProjects(cv.projects || []))
-            .replace(/{{certifications}}/g, formatCertifications(cv.certifications || []))
+            .replace(/{{projects}}/g, formatProjects(cv.projects || [], cvLabels))
+            .replace(/{{certifications}}/g, formatCertifications(cv.certifications || [], cvLabels))
             .replace(/{{education}}/g, formatEducation(cv.education || []));
 
         const normalizedBody = normalizeCoverLetterBody(safeCoverLetter.content || '');
         const contentToInject = formatCoverLetterContent(normalizedBody);
 
-        const recipientName = normalizeInlineText(safeCoverLetter.recipientName || 'Hiring Manager');
+        const recipientName = normalizeInlineText(safeCoverLetter.recipientName || clLabels.defaultRecipientName);
         const recipientTitle = normalizeInlineText(safeCoverLetter.recipientTitle || '');
         const company = normalizeInlineText(safeCoverLetter.company || '');
         const companyAddress = normalizeInlineText(
@@ -288,13 +298,13 @@ export async function generatePDFs(optimizedData) {
             COVER_LETTER_LIMITS.maxAddressChars
         );
         const subject = normalizeInlineText(
-            safeCoverLetter.subject || `Application for ${title}`,
+            safeCoverLetter.subject || `${clLabels.defaultSubjectPrefix} ${title}`,
             COVER_LETTER_LIMITS.maxSubjectChars
         );
         const salutation = normalizeInlineText(
-            safeCoverLetter.salutation || `Dear ${recipientName},`
+            safeCoverLetter.salutation || clLabels.defaultSalutation
         );
-        const closingPhrase = normalizeInlineText(safeCoverLetter.closingPhrase || 'Sincerely,');
+        const closingPhrase = normalizeInlineText(safeCoverLetter.closingPhrase || clLabels.defaultClosingPhrase);
         const signatureName = normalizeInlineText(safeCoverLetter.signatureName || personalInfo.name);
         const signatureTitle = normalizeInlineText(safeCoverLetter.signatureTitle || title);
         const signatureNote = normalizeInlineText(
@@ -303,7 +313,7 @@ export async function generatePDFs(optimizedData) {
         );
         const signatureImageBlock = buildSignatureImageBlock(safeCoverLetter.signatureImage);
         const formattedDate = normalizeInlineText(
-            safeCoverLetter.date || formatCurrentDate(),
+            safeCoverLetter.date || formatCurrentDate(outputLanguage),
             COVER_LETTER_LIMITS.maxInlineFieldChars
         );
 
@@ -320,6 +330,7 @@ export async function generatePDFs(optimizedData) {
             .replace(/{{company}}/g, company)
             .replace(/{{company_address}}/g, companyAddress)
             .replace(/{{subject}}/g, subject)
+            .replace(/{{subject_label}}/g, clLabels.subjectLabel)
             .replace(/{{salutation}}/g, salutation)
             .replace(/{{content}}/g, contentToInject)
             .replace(/{{closing_phrase}}/g, closingPhrase)
@@ -346,8 +357,9 @@ export async function generatePDFs(optimizedData) {
     }
 }
 
-function formatCurrentDate() {
-    return new Intl.DateTimeFormat('en-US', {
+function formatCurrentDate(language = 'en') {
+    const locale = getLocaleConfig(language).dateLocale;
+    return new Intl.DateTimeFormat(locale, {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
