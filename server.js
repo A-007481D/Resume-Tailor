@@ -53,7 +53,7 @@ app.post('/api/generate-content', async (req, res) => {
 
 app.post('/api/generate-pdf', async (req, res) => {
     try {
-        const { optimizedData, language } = req.body;
+        const { optimizedData, language, format, hideProjects } = req.body;
         const outputLanguage = normalizeLanguage(language || optimizedData?.language);
 
         if (!optimizedData) {
@@ -61,7 +61,7 @@ app.post('/api/generate-pdf', async (req, res) => {
         }
 
         console.log('Rendering PDFs with Puppeteer...');
-        const { cvPdf, clPdf } = await generatePDFs(optimizedData, { language: outputLanguage });
+        const { cvPdf, clPdf } = await generatePDFs(optimizedData, { language: outputLanguage, format, hideProjects });
 
         const outputDir = path.join(__dirname, 'public/output');
         await fs.mkdir(outputDir, { recursive: true });

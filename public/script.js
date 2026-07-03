@@ -73,10 +73,13 @@ document.getElementById('renderPdfBtn').addEventListener('click', async () => {
             throw new Error('Invalid JSON format. Please correct syntax errors before rendering.');
         }
 
+        const format = document.getElementById('aiFormat').value;
+        const hideProjects = document.getElementById('aiHideProjects').checked;
+
         const response = await fetch('/api/generate-pdf', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ optimizedData, language })
+            body: JSON.stringify({ optimizedData, language, format, hideProjects })
         });
 
         const data = await tryReadJson(response);
@@ -228,3 +231,233 @@ async function tryReadJson(response) {
 }
 
 initLanguageSelector();
+initModeToggle();
+initDirectLanguageSelector();
+initFormatSelector('aiFormatToggle', 'aiFormat');
+initFormatSelector('directFormatToggle', 'directFormat');
+
+// Mode toggle: switch between AI Generate and Direct JSON Render
+function initModeToggle() {
+    const modeButtons = Array.from(document.querySelectorAll('[data-mode]'));
+    const aiSection = document.getElementById('generateForm');
+    const directSection = document.getElementById('directRenderSection');
+    const editorSection = document.getElementById('editorSection');
+    const resultsBox = document.getElementById('resultsBox');
+    const errorBox = document.getElementById('errorBox');
+
+    modeButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const mode = button.dataset.mode;
+
+            // Update active states
+            modeButtons.forEach(b => b.classList.remove('active'));
+            button.classList.add('active');
+
+            // Hide shared sections
+            editorSection.classList.add('hidden');
+            resultsBox.classList.add('hidden');
+            errorBox.classList.add('hidden');
+
+            if (mode === 'ai') {
+                aiSection.classList.remove('hidden');
+                directSection.classList.add('hidden');
+            } else {
+                aiSection.classList.add('hidden');
+                directSection.classList.remove('hidden');
+                
+                const directJsonInput = document.getElementById('directJsonInput');
+                if (!directJsonInput.value.trim()) {
+                    directJsonInput.value = JSON.stringify(getTemplateJson(), null, 2);
+                }
+            }
+        });
+    });
+}
+
+// Direct language selector (mirrors the main one)
+function initDirectLanguageSelector() {
+    const languageSelect = document.getElementById('directLanguage');
+    const languageButtons = Array.from(document.querySelectorAll('#directLanguageToggle [data-language]'));
+
+    if (!languageSelect || languageButtons.length === 0) return;
+
+    const applyActiveState = (value) => {
+        languageButtons.forEach((button) => {
+            const isActive = button.dataset.language === value;
+            button.classList.toggle('active', isActive);
+            button.setAttribute('aria-pressed', String(isActive));
+        });
+    };
+
+    languageButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            languageSelect.value = button.dataset.language;
+            applyActiveState(languageSelect.value);
+        });
+    });
+
+    applyActiveState(languageSelect.value || 'en');
+}
+
+function initFormatSelector(toggleId, inputId) {
+    const input = document.getElementById(inputId);
+    const toggle = document.getElementById(toggleId);
+    
+    if (!input || !toggle) return;
+    
+    const buttons = Array.from(toggle.querySelectorAll('[data-format]'));
+
+    const applyActiveState = (value) => {
+        buttons.forEach((button) => {
+            const isActive = button.dataset.format === value;
+            button.classList.toggle('active', isActive);
+            button.setAttribute('aria-pressed', String(isActive));
+        });
+    };
+
+    buttons.forEach((button) => {
+        button.addEventListener('click', () => {
+            input.value = button.dataset.format;
+            applyActiveState(input.value);
+        });
+    });
+
+    applyActiveState(input.value || '');
+}
+
+// Direct Render button handler
+document.getElementById('directRenderBtn').addEventListener('click', async () => {
+    const directRenderBtn = document.getElementById('directRenderBtn');
+    const directRenderSpinner = document.getElementById('directRenderSpinner');
+    const errorBox = document.getElementById('errorBox');
+    const resultsBox = document.getElementById('resultsBox');
+    const directJsonInput = document.getElementById('directJsonInput');
+    const language = document.getElementById('directLanguage').value;
+
+    errorBox.classList.add('hidden');
+    resultsBox.classList.add('hidden');
+    directRenderBtn.disabled = true;
+    directRenderSpinner.classList.remove('hidden');
+
+    try {
+        const rawInput = directJsonInput.value.trim();
+        if (!rawInput) {
+            throw new Error('Please paste your JSON data before rendering.');
+        }
+
+        let optimizedData;
+        try {
+            optimizedData = JSON.parse(rawInput);
+        } catch (parseErr) {
+            throw new Error('Invalid JSON format. Please check your syntax and try again.');
+        }
+
+        if (!optimizedData.cv) {
+            throw new Error('JSON must contain a "cv" key with your CV data.');
+        }
+
+        const format = document.getElementById('directFormat').value;
+        const hideProjects = document.getElementById('directHideProjects').checked;
+
+        const response = await fetch('/api/generate-pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ optimizedData, language, format, hideProjects })
+        });
+
+        const data = await tryReadJson(response);
+
+        if (!response.ok) {
+            throw new Error(data?.error || 'Failed to generate PDFs');
+        }
+
+        document.getElementById('cvDownload').href = data.cvUrl;
+        document.getElementById('clDownload').href = data.clUrl;
+        resultsBox.classList.remove('hidden');
+        resultsBox.scrollIntoView({ behavior: 'smooth' });
+
+    } catch (err) {
+        errorBox.textContent = getFriendlyRequestError(err, 'Failed to render PDFs');
+        errorBox.classList.remove('hidden');
+    } finally {
+        directRenderBtn.disabled = false;
+        directRenderSpinner.classList.add('hidden');
+    }
+});
+
+function getTemplateJson() {
+    return {
+        "cv": {
+            "personalInfo": {
+                "name": "Jane Doe",
+                "email": "jane@example.com",
+                "phone": "+1 234 567 8900",
+                "location": "New York, USA",
+                "linkedin": "linkedin.com/in/janedoe",
+                "github": "github.com/janedoe",
+                "summary": "Experienced software engineer with a strong background in building scalable web applications and distributed systems."
+            },
+            "title": "SENIOR SOFTWARE ENGINEER",
+            "skills": [
+                {
+                    "category": "Core Technologies",
+                    "items": ["JavaScript", "TypeScript", "Python", "Go", "Java"]
+                },
+                {
+                    "category": "Cloud & Infrastructure",
+                    "items": ["AWS", "Docker", "Kubernetes", "Terraform"]
+                }
+            ],
+            "experience": [
+                {
+                    "company": "Tech Corp | New York",
+                    "position": "Senior Software Engineer",
+                    "startDate": "Jan 2021",
+                    "endDate": "Present",
+                    "highlights": [
+                        "Architected and deployed a microservices-based backend that improved system throughput by 40%.",
+                        "Led a team of 5 engineers to deliver critical features ahead of schedule."
+                    ]
+                }
+            ],
+            "projects": [
+                {
+                    "name": "Open Source Analytics",
+                    "description": "A real-time analytics dashboard.",
+                    "technologies": ["React", "Node.js", "Redis"],
+                    "highlights": [
+                        "Handled over 10,000 concurrent websocket connections."
+                    ]
+                }
+            ],
+            "education": [
+                {
+                    "degree": "B.S. Computer Science",
+                    "institution": "State University",
+                    "graduationYear": "2016 - 2020"
+                }
+            ],
+            "certifications": [
+                {
+                    "name": "AWS Certified Solutions Architect",
+                    "issuer": "Amazon Web Services",
+                    "date": "2023"
+                }
+            ]
+        },
+        "coverLetter": {
+            "recipientName": "Hiring Manager",
+            "recipientTitle": "Engineering Team",
+            "company": "Innovative Startups Inc.",
+            "companyAddress": "San Francisco, CA",
+            "subject": "Application for Senior Software Engineer",
+            "salutation": "Dear Hiring Manager,",
+            "content": "I am writing to express my strong interest in the Senior Software Engineer position. With my background in distributed systems and cloud architecture, I believe I can make an immediate impact on your team.",
+            "closingPhrase": "Sincerely,",
+            "signatureName": "Jane Doe",
+            "signatureTitle": "Software Engineer"
+        },
+        "language": "en"
+    };
+}
+

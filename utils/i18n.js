@@ -13,7 +13,8 @@ const LOCALE_CONFIG = {
             coreTechnologies: 'Core Technologies',
             stack: 'Stack',
             qrLabel: 'Portfolio',
-            defaultTitle: 'Software Engineer'
+            defaultTitle: 'Software Engineer',
+            summary: 'Summary'
         },
         coverLetter: {
             subjectLabel: 'Subject:',
@@ -35,7 +36,8 @@ const LOCALE_CONFIG = {
             coreTechnologies: 'Technologies principales',
             stack: 'Stack',
             qrLabel: 'Portfolio',
-            defaultTitle: 'Ingenieur logiciel'
+            defaultTitle: 'Ingenieur logiciel',
+            summary: 'Résumé'
         },
         coverLetter: {
             subjectLabel: 'Objet :',

@@ -29,6 +29,18 @@ const COVER_LETTER_LIMITS = {
     maxSubjectChars: 140
 };
 
+// Hard content budget to guarantee single-page rendering
+const CV_CONTENT_BUDGET = {
+    maxProjects: 3,
+    maxExperiences: 3,
+    maxBulletsPerEntry: 3,
+    maxBulletChars: 130,
+    maxEducation: 2,
+    maxCertifications: 2,
+    maxSkillCategories: 4,
+    maxDescriptionChars: 100
+};
+
 async function getProfilePhotoSrc() {
     for (const fileName of PHOTO_FILE_CANDIDATES) {
         const photoPath = path.join(ROOT_DIR, fileName);
@@ -131,7 +143,8 @@ function ensureRequiredCertifications(certifications) {
 }
 
 function formatCertifications(certifications, labels) {
-    const safeCertifications = ensureRequiredCertifications(certifications);
+    const safeCertifications = ensureRequiredCertifications(certifications)
+        .slice(0, CV_CONTENT_BUDGET.maxCertifications);
     if (safeCertifications.length === 0) return '';
 
     const listHtml = safeCertifications.map(cert => `
@@ -154,7 +167,14 @@ ${listHtml}
 
 function formatSkills(skills, labels) {
     if (!skills || skills.length === 0) return '';
-    return `<span class="skill-label">${labels.coreTechnologies}:</span> ${skills.join(', ')}`;
+    if (Array.isArray(skills) && typeof skills[0] === 'string') {
+        return `<div class="skill-line"><span class="skill-label">${labels.coreTechnologies}:</span> ${skills.join(', ')}</div>`;
+    }
+    return skills.map(group => `
+        <div class="skill-line">
+            <span class="skill-label">${group.category}:</span> ${(group.items || []).join(', ')}
+        </div>
+    `).join('');
 }
 
 function formatCoverLetterContent(content) {
@@ -186,17 +206,34 @@ function normalizeCoverLetterBody(content) {
         return '';
     }
 
-    const paragraphs = asText
+    let paragraphs = asText
         .split(/\n\n+/)
         .map(p => p.trim())
-        .filter(Boolean)
-        .slice(0, COVER_LETTER_LIMITS.maxParagraphs);
+        .filter(Boolean);
+
+    // Strip common salutations from the first paragraph
+    if (paragraphs.length > 0) {
+        const firstPara = paragraphs[0];
+        const salutationRegex = /^(dear|to whom|hello|hi|madame|monsieur|objet\s*:|subject\s*:)/i;
+        if (salutationRegex.test(firstPara) && (firstPara.split(/\s+/).length < 12 || firstPara.includes(','))) {
+            paragraphs.shift();
+        }
+    }
+
+    // Strip common closings/signatures from the last paragraph
+    if (paragraphs.length > 0) {
+        const lastPara = paragraphs[paragraphs.length - 1];
+        const closingRegex = /^(sincerely|regards|best|thank you|cordialement|bien\s*à\s*vous)/i;
+        if (closingRegex.test(lastPara) && lastPara.split(/\s+/).length < 10) {
+            paragraphs.pop();
+        }
+    }
 
     const finalParagraphs = [];
     let wordCount = 0;
     let charCount = 0;
 
-    for (const paragraph of paragraphs) {
+    for (const paragraph of paragraphs.slice(0, COVER_LETTER_LIMITS.maxParagraphs)) {
         const words = paragraph.split(/\s+/).filter(Boolean);
 
         if (wordCount >= COVER_LETTER_LIMITS.maxWords || charCount >= COVER_LETTER_LIMITS.maxChars) {
@@ -237,20 +274,58 @@ function buildSignatureImageBlock(signatureImage) {
 
 let browserInstance = null;
 
+function enforceContentBudget(cv) {
+    // Cap projects
+    if (Array.isArray(cv.projects)) {
+        cv.projects = cv.projects.slice(0, CV_CONTENT_BUDGET.maxProjects).map(p => ({
+            ...p,
+            highlights: (p.highlights || []).slice(0, CV_CONTENT_BUDGET.maxBulletsPerEntry)
+        }));
+    }
+
+    // Cap experience
+    if (Array.isArray(cv.experience)) {
+        cv.experience = cv.experience.slice(0, CV_CONTENT_BUDGET.maxExperiences).map(exp => ({
+            ...exp,
+            highlights: (exp.highlights || []).slice(0, CV_CONTENT_BUDGET.maxBulletsPerEntry)
+        }));
+    }
+
+    // Cap education
+    if (Array.isArray(cv.education)) {
+        cv.education = cv.education.slice(0, CV_CONTENT_BUDGET.maxEducation);
+    }
+
+    // Cap certifications
+    if (Array.isArray(cv.certifications)) {
+        cv.certifications = cv.certifications.slice(0, CV_CONTENT_BUDGET.maxCertifications);
+    }
+
+    // Cap skill categories
+    if (Array.isArray(cv.skills)) {
+        cv.skills = cv.skills.slice(0, CV_CONTENT_BUDGET.maxSkillCategories);
+    }
+
+    return cv;
+}
+
 export async function generatePDFs(optimizedData, options = {}) {
     if (!browserInstance) {
         console.log("Launching Puppeteer browser instance...");
-        browserInstance = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+        browserInstance = await puppeteer.launch({ headless: true, executablePath: process.env.PUPPETEER_EXECUTABLE_PATH, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     }
     const browser = browserInstance;
     try {
-        const cvTemplatePath = path.join(__dirname, '../templates/cv.html');
+        const templateName = options.format ? `cv_${options.format}.html` : 'cv.html';
+        const cvTemplatePath = path.join(__dirname, '../templates', templateName);
         const clTemplatePath = path.join(__dirname, '../templates/cover_letter.html');
 
         let cvHtml = await fs.readFile(cvTemplatePath, 'utf8');
         let clHtml = await fs.readFile(clTemplatePath, 'utf8');
 
         const { cv, coverLetter } = optimizedData;
+        // Enforce hard content limits before rendering
+        enforceContentBudget(cv);
         const safeCoverLetter = coverLetter && typeof coverLetter === 'object' ? coverLetter : {};
         const { personalInfo } = cv;
         const outputLanguage = normalizeLanguage(options.language || optimizedData?.language);
@@ -263,6 +338,7 @@ export async function generatePDFs(optimizedData, options = {}) {
         const linkedinShort = personalInfo.linkedin ? personalInfo.linkedin.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/^linkedin\.com\/in\//, '') : '';
 
         const title = cv.title || cvLabels.defaultTitle;
+        const summaryText = cv.summary || (cv.personalInfo && cv.personalInfo.summary);
 
         // Inject CV Data
         cvHtml = cvHtml
@@ -283,7 +359,8 @@ export async function generatePDFs(optimizedData, options = {}) {
             .replace(/{{qr_label}}/g, cvLabels.qrLabel)
             .replace(/{{skills}}/g, formatSkills(cv.skills || [], cvLabels))
             .replace(/{{experience}}/g, formatExperience(cv.experience || []))
-            .replace(/{{projects}}/g, formatProjects(cv.projects || [], cvLabels))
+            .replace(/{{summary_section}}/g, summaryText ? `<section><h2>${cvLabels.summary}</h2><div class="content-block">${summaryText}</div></section>` : '')
+            .replace(/{{projects_section}}/g, options.hideProjects ? '' : `<section><h2>${cvLabels.featuredProjects}</h2>${formatProjects(cv.projects || [], cvLabels)}</section>`)
             .replace(/{{certifications}}/g, formatCertifications(cv.certifications || [], cvLabels))
             .replace(/{{education}}/g, formatEducation(cv.education || []));
 
@@ -341,7 +418,25 @@ export async function generatePDFs(optimizedData, options = {}) {
 
         const cvPage = await browser.newPage();
         await cvPage.setContent(cvHtml, { waitUntil: 'networkidle0' });
-        const cvPdfBuffer = await cvPage.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true });
+
+        // Overflow detection: warn when content exceeds A4 page height
+        const overflow = await cvPage.evaluate(() => {
+            const page = document.querySelector('.page');
+            if (!page) return { overflowed: false };
+            const scrollH = page.scrollHeight;
+            const clientH = page.clientHeight;
+            return {
+                overflowed: scrollH > clientH + 2,
+                scrollHeight: scrollH,
+                clientHeight: clientH,
+                overflowPx: scrollH - clientH
+            };
+        });
+        if (overflow.overflowed) {
+            console.warn(`⚠ CV OVERFLOW DETECTED: content is ${overflow.overflowPx}px taller than page (${overflow.scrollHeight}px vs ${overflow.clientHeight}px). Content will be clipped.`);
+        }
+
+        const cvPdfBuffer = await cvPage.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true, pageRanges: '1' });
 
         const clPage = await browser.newPage();
         await clPage.setContent(clHtml, { waitUntil: 'networkidle0' });
