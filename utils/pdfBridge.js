@@ -32,7 +32,7 @@ const COVER_LETTER_LIMITS = {
 // Hard content budget to guarantee single-page rendering
 const CV_CONTENT_BUDGET = {
     maxProjects: 3,
-    maxExperiences: 3,
+    maxExperiences: 5,
     maxBulletsPerEntry: 3,
     maxBulletChars: 130,
     maxEducation: 2,
